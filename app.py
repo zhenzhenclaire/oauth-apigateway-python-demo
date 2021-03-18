@@ -1,34 +1,35 @@
 from datetime import datetime
 from flask import request
 import python_jwt as jwt, jwcrypto.jwk as jwk, datetime
-# from wtforms import TextField, validators, SubmitField
+from wtforms import TextField, validators, SubmitField
 from flask import Flask, render_template, redirect, url_for
-# from flask_bootstrap import Bootstrap
-# from flask_wtf import FlaskForm
-#
-#
+from flask_bootstrap import Bootstrap
+from flask_wtf import FlaskForm
+
+
 app = Flask(__name__)
-# app.config['SECRET_KEY'] = 'C2HWGVoMGfNTBsrYQg8EcMrdTimkZfAb'
-# Bootstrap(app)
-#
-# class LoginForm(FlaskForm):
-#     username = TextField('Username:', validators=[validators.required()])
-#     password = TextField('Password:', validators=[validators.required()])
-#     submit = SubmitField('Submit')
-#
-# @app.route('/', methods=['GET', 'POST'])
-# def login():
-#     form = LoginForm()
-#     if request.method == 'POST':
-#
-#         username = form.username.data
-#         password = form.password.data
-#         if username == 'apigw' and password == 'apigwpsw':
-#             code = "apigwcode"
-#             return redirect(url_for("generate", code=code), 302)
-#         else:
-#             return render_template('error.html')
-#     return render_template('form.html', form=form)
+app.config['SECRET_KEY'] = 'C2HWGVoMGfNTBsrYQg8EcMrdTimkZfAb'
+Bootstrap(app)
+
+class LoginForm(FlaskForm):
+    username = TextField('Username:', validators=[validators.required()])
+    password = TextField('Password:', validators=[validators.required()])
+    submit = SubmitField('Submit')
+
+
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if request.method == 'POST':
+
+        username = form.username.data
+        password = form.password.data
+        if username == 'apigw' and password == 'apigwpsw':
+            code = "apigwcode"
+            return redirect(url_for("generate", code=code), 302)
+        else:
+            return render_template('error.html')
+    return render_template('form.html', form=form)
 
 
 def get_file_content(file):
