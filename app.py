@@ -1,23 +1,35 @@
 from datetime import datetime
+
+import flask
 from flask import request
 import python_jwt as jwt, jwcrypto.jwk as jwk, datetime
-from wtforms import TextField, validators, SubmitField
+from wtforms import TextField, validators, SubmitField, PasswordField
 from flask import Flask, render_template, redirect, url_for
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
-
+from wtforms.widgets import PasswordInput
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'C2HWGVoMGfNTBsrYQg8EcMrdTimkZfAb'
 Bootstrap(app)
 
+
+class MyPasswordField(PasswordField):
+    widget = PasswordInput(hide_value=False)
+
+
 class LoginForm(FlaskForm):
     username = TextField('Username:', validators=[validators.required()])
-    password = TextField('Password:', validators=[validators.required()])
+    password = MyPasswordField('Password:', validators=[validators.required()])
     submit = SubmitField('Submit')
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
+def welcome():
+    return "Welcome to APIGateway"
+
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if request.method == 'POST':
@@ -27,6 +39,22 @@ def login():
         if username == 'apigw' and password == 'apigwpsw':
             code = "apigwcode"
             return redirect(url_for("generate", code=code), 302)
+        else:
+            return render_template('error.html')
+    return render_template('form.html', form=form)
+
+
+@app.route('/singlelogin', methods=['GET', 'POST'])
+def singlelogin():
+    redirect_uri = request.args.get("redirect_uri")
+    form = LoginForm()
+    if request.method == 'POST':
+
+        username = form.username.data
+        password = form.password.data
+        if username == 'apigw' and password == 'apigwpsw':
+            code = "apigwcode"
+            return redirect(url_for("generate_cookie", code=code, redirect_uri=redirect_uri), 302)
         else:
             return render_template('error.html')
     return render_template('form.html', form=form)
@@ -58,6 +86,29 @@ def check():
         return "failed"
 
 
+@app.route('/generate_cookie')
+def generate_cookie():
+    auth_code = request.args.get("code")
+    print(auth_code)
+    redirect_uri = request.args.get("redirect_uri")
+    print(redirect_uri)
+    auth_code_lib = ["apigwcode", "serverlesscode"]
+    if auth_code in auth_code_lib:
+        priv_pem = str(get_file_content('priv_pem')).encode('utf-8')
+        payload = {'foo': 'bar', 'wup': 90}
+        priv_key = jwk.JWK.from_pem(priv_pem)
+        token = jwt.generate_jwt(claims=payload, priv_key=priv_key, algorithm='RS256',
+                                 lifetime=datetime.timedelta(minutes=5))
+
+        resp = flask.make_response(redirect(redirect_uri), 302)
+        cookie = token+";httponly;path=/"
+        resp.set_cookie("id_token", value=cookie)
+
+        return resp
+    else:
+        return "invalid"
+
+
 @app.route('/generate')
 def generate():
     auth_code = request.args.get("code")
@@ -72,7 +123,6 @@ def generate():
         return token
     else:
         return "invalid"
-
 
 @app.route('/code')
 def code():
