@@ -101,8 +101,8 @@ def generate_cookie():
                                  lifetime=datetime.timedelta(minutes=5))
 
         resp = flask.make_response(redirect(redirect_uri), 302)
-        cookie = token+";httponly;path=/"
-        resp.set_cookie("id_token", value=cookie)
+
+        resp.set_cookie("id_token", value=token)
 
         return resp
     else:
